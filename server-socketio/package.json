@@ -1,0 +1,21 @@
+{
+  "name": "cerrahpasa-docs-server",
+  "version": "1.0.0",
+  "description": "Cerrahpaşa Docs - Socket.IO Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.5",
+    "fs-extra": "^11.2.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "keywords": ["socket.io", "real-time", "editor"],
+  "author": "Cerrahpaşa Docs Team",
+  "license": "MIT"
+} 

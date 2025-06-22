@@ -1,6 +1,6 @@
 package edu.iuc.client;
 
-import edu.iuc.server.ServerMain;
+// Socket.IO Server artık Node.js ile çalışıyor
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -171,11 +171,35 @@ public class MainMenuFrame extends JFrame {
 
         serverThread = new Thread(() -> {
             try {
-                addLog("Server başlatılıyor...");
-                ServerMain.main(new String[]{});
+                addLog("Socket.IO Server başlatılıyor...");
+                addLog("Komut: cd server-socketio && npm start");
+                
+                ProcessBuilder pb = new ProcessBuilder();
+                pb.command("cmd", "/c", "cd server-socketio && npm start");
+                pb.directory(new java.io.File(".")); // Ana proje dizini
+                
+                Process process = pb.start();
+                
+                // Process çıktısını okuma
+                new Thread(() -> {
+                    try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                            new java.io.InputStreamReader(process.getInputStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            final String logLine = line;
+                            SwingUtilities.invokeLater(() -> addLog("Server: " + logLine));
+                        }
+                    } catch (Exception e) {
+                        SwingUtilities.invokeLater(() -> addLog("Server log okuma hatası: " + e.getMessage()));
+                    }
+                }).start();
+                
+                process.waitFor();
+                
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     addLog("Server hatası: " + e.getMessage());
+                    addLog("Not: Node.js yüklü olduğundan ve server-socketio klasöründe 'npm install' çalıştırıldığından emin olun");
                     serverStatusLabel.setText("❌ Server Hatası");
                     serverStatusLabel.setForeground(Color.RED);
                 });
@@ -185,13 +209,13 @@ public class MainMenuFrame extends JFrame {
         serverThread.setDaemon(true);
         serverThread.start();
 
-        Timer timer = new Timer(2000, e -> {
+        Timer timer = new Timer(3000, e -> {
             serverRunning = true;
-            serverStatusLabel.setText("✅ Server Çalışıyor (Port: 9999)");
+            serverStatusLabel.setText("✅ Socket.IO Server Çalışıyor (Port: 9999)");
             serverStatusLabel.setForeground(Color.GREEN);
             newClientButton.setEnabled(true);
             stopServerButton.setEnabled(true);
-            addLog("Server başarıyla başlatıldı (Port: 9999)");
+            addLog("Socket.IO Server başarıyla başlatıldı (Port: 9999)");
         });
         timer.setRepeats(false);
         timer.start();

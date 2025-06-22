@@ -4,15 +4,12 @@ import edu.iuc.shared.Message;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class EditorFrame extends JFrame {
-    private Socket socket;
-    private BufferedWriter writer;
-    private BufferedReader reader;
+    private SocketIOClientAdapter socketIOClient;
     private String username;
     private String clientName;
     private MainMenuFrame parentFrame;
@@ -364,44 +361,47 @@ public class EditorFrame extends JFrame {
             return;
         }
 
-        try {
-            socket = new Socket("localhost", 9999);
-            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            new Thread(this::listenToServer).start();
-
-            sendMessage(Message.login(username));
-
-            addStatus("Sunucuya bağlanıldı: " + username);
-            updateParentStatus("Bağlanıyor...");
-
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Sunucuya bağlanılamadı: " + e.getMessage());
-            addStatus("Bağlantı hatası: " + e.getMessage());
-            updateParentStatus("Bağlantı Hatası");
-        }
-    }
-
-    private void listenToServer() {
-        try {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                final String message = line;
-                SwingUtilities.invokeLater(() -> processServerMessage(message));
-            }
-        } catch (IOException e) {
+        socketIOClient = new SocketIOClientAdapter();
+        
+        // Event handler'ları ayarla
+        socketIOClient.setMessageHandler(this::processServerMessage);
+        
+        socketIOClient.setConnectHandler(status -> {
+            SwingUtilities.invokeLater(() -> {
+                isConnected = true;
+                sendMessage(Message.login(username));
+                addStatus("Sunucuya bağlanıldı: " + username);
+                updateParentStatus("Bağlanıyor...");
+            });
+        });
+        
+        socketIOClient.setDisconnectHandler(status -> {
             SwingUtilities.invokeLater(() -> {
                 if (isConnected) {
-                    addStatus("Sunucu bağlantısı kesildi: " + e.getMessage());
+                    addStatus("Sunucu bağlantısı kesildi: " + status);
                     isConnected = false;
                     statusLabel.setText("❌ Bağlantı kesildi");
                     statusLabel.setForeground(Color.RED);
                     updateParentStatus("Bağlantı Kesildi");
                 }
             });
-        }
+        });
+
+        // Sunucuya bağlan
+        CompletableFuture<Boolean> connectionFuture = socketIOClient.connect("http://localhost:9999");
+        
+        connectionFuture.thenAccept(connected -> {
+            if (!connected) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Sunucuya bağlanılamadı!");
+                    addStatus("Bağlantı hatası");
+                    updateParentStatus("Bağlantı Hatası");
+                });
+            }
+        });
     }
+
+
 
     private void processServerMessage(String rawMessage) {
         try {
@@ -650,13 +650,8 @@ public class EditorFrame extends JFrame {
     }
 
     private void sendMessage(String message) {
-        if (writer != null) {
-            try {
-                writer.write(message + "\n");
-                writer.flush();
-            } catch (IOException e) {
-                addStatus("❌ Mesaj gönderilirken hata: " + e.getMessage());
-            }
+        if (socketIOClient != null && isConnected) {
+            socketIOClient.sendMessage(message);
         }
     }
 
@@ -682,20 +677,15 @@ public class EditorFrame extends JFrame {
     }
 
     private void disconnectFromServer() {
-        try {
-            isConnected = false;
-            if (writer != null) writer.close();
-            if (reader != null) reader.close();
-            if (socket != null) socket.close();
-
-            statusLabel.setText("❌ Bağlantı kesildi");
-            statusLabel.setForeground(Color.RED);
-            addStatus("🔌 Sunucudan bağlantı kesildi");
-            updateParentStatus("Bağlantı Kesildi");
-
-        } catch (IOException e) {
-            addStatus("❌ Bağlantı kesilirken hata: " + e.getMessage());
+        isConnected = false;
+        if (socketIOClient != null) {
+            socketIOClient.disconnect();
         }
+
+        statusLabel.setText("❌ Bağlantı kesildi");
+        statusLabel.setForeground(Color.RED);
+        addStatus("🔌 Sunucudan bağlantı kesildi");
+        updateParentStatus("Bağlantı Kesildi");
     }
 
     public String getClientName() {

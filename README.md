@@ -1,55 +1,114 @@
-# Cerrahpaşa Docs
+# Cerrahpaşa Docs - Socket.IO Versiyonu
 
-Cerrahpaşa Docs, çok kullanıcılı, gerçek zamanlı bir metin editörü masaüstü uygulamasıdır.
+Bu proje, çok kullanıcılı gerçek zamanlı metin editörüdür. Önceden salt TCP socket programlama kullanırken, şimdi modern Socket.IO teknolojisi ile çalışmaktadır.
 
-## Temel Özellikler
+## Özellikler
 
-*   **Gerçek Zamanlı Ortak Düzenleme:** Birden fazla kullanıcı aynı anda aynı dosyalar üzerinde değişiklik yapabilir ve değişiklikleri eş zamanlı olarak görebilir.
-*   **Kullanıcı Yönetimi:** Kullanıcılar sisteme benzersiz bir kullanıcı adı ile giriş yaparlar.
-*   **Dosya Yönetimi:**
-    *   Sunucudaki dosyaları listeleme.
-    *   Yeni dosya oluşturma.
-    *   Mevcut dosyaları açma ve farklı sekmelerde düzenleme.
-    *   Değişikliklerin sunucu tarafında otomatik ve manuel olarak kaydedilmesi.
-*   **Özel İletişim Protokolü:** İstemci ve sunucu arasında veri alışverişi için özel tasarlanmış metin tabanlı bir protokol kullanır.
-*   **Yalın Soket Programlama:** İletişim, Java'nın temel TCP soketleri kullanılarak gerçekleştirilmiştir. Herhangi bir üçüncü parti ağ framework'ü kullanılmamıştır.
-*   **Masaüstü Arayüzü:** Kullanıcı etkileşimi için Java Swing ile bir masaüstü arayüzü sunar.
+- ✅ Çok kullanıcılı gerçek zamanlı düzenleme
+- ✅ Dosya oluşturma, açma, kaydetme
+- ✅ Kullanıcı giriş/çıkış bildirimleri  
+- ✅ Modern Socket.IO iletişimi
+- ✅ Mevcut CTP protokolü korunuyor
+- ✅ Java Swing GUI
+- ✅ Node.js sunucu
 
-## Kullanılan Teknolojiler
+## Teknoloji Stack
 
-*   **Programlama Dili:** Java 21
-*   **Arayüz:** Java Swing
-*   **Ağ İletişimi:** TCP/IP Soketleri (java.net.Socket, java.net.ServerSocket)
-*   **Protokol:** Özel Tasarım Metin Tabanlı Protokol
-*   **Derleme ve Bağımlılık Yönetimi:** Apache Maven
+### İstemci (Client)
+- **Java 21** - Ana uygulama dili
+- **Swing** - GUI framework
+- **Socket.IO Client Java** - Gerçek zamanlı iletişim
+- **Maven** - Bağımlılık yönetimi
 
-## Gereksinimler
+### Sunucu (Server)  
+- **Node.js** - Server runtime
+- **Socket.IO** - WebSocket/polling tabanlı iletişim
+- **fs-extra** - Dosya işlemleri
 
-Projeyi derlemek ve çalıştırmak için sisteminizde aşağıdakilerin kurulu olması gerekmektedir:
+## Kurulum ve Çalıştırma
 
-*   Java Development Kit (JDK) 21 veya üzeri
-*   Apache Maven 3.6.0 veya üzeri
+### 1. Ön Koşullar
+- Java 21 veya üstü
+- Node.js 16 veya üstü
+- Maven 3.6 veya üstü
 
-## Derleme Talimatları
-
-Projenin kök dizininde bir terminal veya komut istemcisi açın ve aşağıdaki Maven komutunu çalıştırın:
+### 2. Sunucuyu Başlatın
 
 ```bash
-mvn clean package
+# Sunucu klasörüne gidin
+cd server-socketio
+
+# Bağımlılıkları yükleyin
+npm install
+
+# Sunucuyu başlatın
+npm start
 ```
 
-## Uygulamayı Çalıştırma
+### 3. İstemciyi Çalıştırın
 
-Uygulama, bir ana kontrol paneli (`MainMenuFrame`) üzerinden hem sunucuyu başlatır hem de istemci pencerelerinin açılmasına olanak tanır.
+```bash
+# Ana projede
+mvn compile exec:java -Dexec.mainClass="edu.iuc.Main"
+```
 
-**1. IDE Üzerinden Çalıştırma:**
+### 4. Alternatif: IDE'den Çalıştırma
 
-Proje dosyalarını bir Java IDE'sine (örn: IntelliJ IDEA, Eclipse) import ettikten sonra `edu.iuc.Main` sınıfını bularak çalıştırabilirsiniz. Bu sınıf, `MainMenuFrame`'i başlatacaktır.
+1. Main.java dosyasını IDE'nizde açın
+2. Önce server-socketio klasöründe `npm install` çalıştırın
+3. IDE'den Main sınıfını çalıştırın
+4. Ana menüden "Yeni Client Aç" butonunu kullanın
 
-`MainMenuFrame` açıldığında sunucu otomatik olarak 9999 portunda başlatılacaktır. Ardından "Yeni Client Aç" butonu ile editör pencerelerini açıp kullanıcı girişi yaparak uygulamayı kullanmaya başlayabilirsiniz.
+## Protokol (CTP - CerrahText Protocol)
 
-## Özel İletişim Protokolü
+Mevcut mesaj formatı korunmuştur:
 
-Uygulama, istemci ve sunucu arasındaki tüm iletişimi sağlamak için özel olarak tasarlanmış metin tabanlı bir protokol kullanır. Bu protokol, `KOMUT#PARAMETRE1#PARAMETRE2` şeklinde bir mesaj formatına sahiptir. Başlıca mesaj komutları arasında `LOGIN`, `LIST_FILES_REQUEST`, `OPEN_FILE_REQUEST`, `EDIT`, `CREATE_FILE`, `SAVE_FILE` ve bunlara karşılık gelen sunucu yanıtları (`SUCCESS`, `ERROR`, `LIST_FILES_RESPONSE` vb.) bulunur.
+```
+COMMAND#PARAM1#PARAM2
+```
 
-Protokol, mesaj başlığını (KOMUT) ve içeriğini (PARAMETRELER) ayırt ederek yapılandırılmış bir iletişim sağlar. Detaylı protokol dokümantasyonu proje raporunda sunulmuştur.
+### Desteklenen Komutlar
+
+| Komut | Açıklama |
+|-------|----------|
+| LOGIN | Kullanıcı girişi |
+| LIST_FILES_REQUEST | Dosya listesi talebi |
+| OPEN_FILE_REQUEST | Dosya açma |
+| CREATE_FILE | Yeni dosya oluşturma |
+| EDIT | Dosya düzenleme (gerçek zamanlı) |
+| SAVE_FILE | Dosya kaydetme |
+
+## Değişiklikler (v1 → v2)
+
+### ✅ Avantajlar
+- **Modern teknoloji**: Socket.IO WebSocket tabanlı iletişim
+- **Daha iyi performans**: Otomatik reconnection, buffering
+- **Kolay geliştirme**: Event-based yapı
+- **Cross-platform**: Web tarayıcılardan da bağlanılabilir
+- **Esnek**: HTTP polling fallback desteği
+
+### 🔄 Korunan Özellikler  
+- Tüm GUI aynı
+- Mevcut protokol formatı
+- Kullanıcı deneyimi
+- Dosya yönetimi
+
+## Proje Yapısı
+
+```
+CerrahpasaDocs/
+├── src/main/java/edu/iuc/
+│   ├── client/                    # İstemci kodları
+│   │   ├── EditorFrame.java       # Ana editör penceresi
+│   │   ├── MainMenuFrame.java     # Ana menü
+│   │   └── SocketIOClientAdapter.java # Socket.IO adaptörü
+│   ├── shared/                    # Ortak sınıflar
+│   │   ├── Message.java           # Mesaj sınıfı
+│   │   └── MessageType.java       # Mesaj türleri
+│   └── Main.java                  # Ana giriş noktası
+├── server-socketio/               # Node.js sunucu
+│   ├── server.js                  # Socket.IO sunucusu
+│   ├── package.json              # NPM konfigürasyonu
+│   └── files/                    # Kullanıcı dosyaları
+└── pom.xml                       # Maven konfigürasyonu
+```
